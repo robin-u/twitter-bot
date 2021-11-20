@@ -1,5 +1,6 @@
 from bot import Twbot
 import time
+import sqlite3
 
 tw = Twbot()
 credential_check = tw.auth_test() # to check if the credentials is valid
@@ -17,24 +18,23 @@ def start():
             media_short_url = messages[0]['short_url']
             media_type = messages[0]['media_type']
         except:
-            print("Currently, there's no dm")
-            time.sleep(120)
+            print("Currently, there's no dm. Waiting for a new DM")
+            print('-'*50 + '\n')
+            time.sleep(90)
             continue
         
         # Check if the length is <= 280 and if there's trigger word
         if len(dm) <= 280 and trigger_word in dm:
             # Tweets if there's no media id and media type
             if media_id is None and media_type is None:
-                print("DM doesn't have any media...")
+                print("DM doesn't have any media. Will be tweeted soon~")
                 tw.post_tweet(dm)
                 tw.delete_dm(dm_id)
-                time.sleep(60)
             # Delete the DM because it has invalid attachment (gif or video)
             elif media_id is None and media_type != 'photo':
                 print("File is not a photo. File type is %s. Please, attach a photo" % (media_type))
                 print("Wrong attachment type. Will delete DM")
                 tw.delete_dm(dm_id)
-                time.sleep(60)
             else:
                 print("DM has a media attached...")
                 # Uploading media
@@ -45,18 +45,14 @@ def start():
                 dm = dm.replace(media_short_url, '')
                 tw.post_tweet_with_media(dm, media_ids[:], media_short_url)
                 tw.delete_dm(dm_id)
-                print("Restarting the script")
-                time.sleep(60)
         else:
             if len(dm) > 280:
-                print("DM will be deleted. It's longer than 280 char")
+                print("DM will be deleted. It's longer than 280 char. Instead, screenshot the dm and send it again.")
             elif trigger_word not in dm:
                 print("DM will be deleted. It don't have the trigger word")
             else:
                 print("DM will be deleted. The sent dm doesn't follow the rules")
             tw.delete_dm(dm_id)
-            print("Restarting the script")
-            time.sleep(60)
         messages = list() # resets the dms in messages var
 
 if credential_check and __name__ == '__main__':

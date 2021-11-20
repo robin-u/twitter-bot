@@ -4,8 +4,7 @@ import time
 import requests
 from requests_oauthlib import OAuth1
 import os
-
-
+import re
 
 class Twbot:
     def __init__(self):
@@ -53,10 +52,18 @@ class Twbot:
                     dms.append(temp)
         dms.reverse() # Reading from the oldest dm
         return dms
-
+    
+    # Checking if there's an url_attachment
     # Tweeting tweet (text-only)
     def post_tweet(self, tweet):
-        self.api.update_status(tweet)
+        # Checks if there's the regex pattern in dm (for QRT purposes)
+        try:
+            if re.search(r'https://twitter.com/.+/\d+', tweet).group() in tweet:
+                url = re.search(r'https://twitter.com/.+/\d+', tweet).group()
+            self.api.update_status(tweet, attachment_url=url)
+        except:
+            self.api.update_status(tweet)
+
         print("Tweeting...")
         time.sleep(3)
         print("Tweeted!")
@@ -89,7 +96,12 @@ class Twbot:
     # Tweeting tweet with media
     def post_tweet_with_media(self, tweet, media_id, media_short_url):
         tweet = tweet.replace(media_short_url, '')
-        self.api.update_status(tweet, media_ids=media_id)
+        try:
+            if re.search(r'https://twitter.com/.+/\d+', tweet).group() in tweet:
+                url = re.search(r'https://twitter.com/.+/\d+', tweet).group()
+            self.api.update_status(tweet, media_ids=media_id, attachment_url=url)
+        except:
+            self.api.update_status(tweet, media_ids=media_id)
         print("Tweeting with attachment(s)...")
         time.sleep(3)
         print("Tweeted with attachment(s)!")
@@ -99,5 +111,8 @@ class Twbot:
         self.api.delete_direct_message(id)
         print("Deleting DM...")
         time.sleep(3)
-        print("DM deleted!")
-        print("-"*35)
+        print("""DM deleted!
+Restarting the script...
+{}
+""".format('-'*50))
+        time.sleep(60)
