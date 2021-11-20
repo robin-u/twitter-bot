@@ -1,16 +1,34 @@
 from bot import Twbot
 import time
-import sqlite3
+import sqlite3 # Comment this line out if you don't want to store sender id and the dm sent
 
+# Creating the twitter/tw object
 tw = Twbot()
 credential_check = tw.auth_test() # to check if the credentials is valid
 
+# Creating DB
+try: 
+    con = sqlite3.connect('senders.sqlite')
+    cur = con.cursor()
+
+    # Creating table with the attribute of sender_id and sent_dm
+    # There's no primary key or unique constraint, as the db is just intended to store sender id and the dm
+    cur.execute('''
+    CREATE TABLE IF NOT EXISTS Message (
+        sender_id INT NOT NULL,
+        sent_dm VARCHAR(280)
+    );  
+    ''')
+except:
+    pass
+
 def start():
-    """ Trigger word is "ftw!" """
-    trigger_word = 'ftw!'
+    """ Trigger word is "word!" """
+    trigger_word = 'word!'
     while True:
         messages = tw.read_dm()
         try:
+            sender_id = messages[0]['sender']
             dm = messages[0]['message']
             dm_id = messages[0]['message_id']
             media_id = messages[0]['media_id']
@@ -27,8 +45,14 @@ def start():
         if len(dm) <= 280 and trigger_word in dm:
             # Tweets if there's no media id and media type
             if media_id is None and media_type is None:
-                print("DM doesn't have any media. Will be tweeted soon~")
+                print("There's a DM! The DM doesn't have any media. Will be tweeted soon~")
                 tw.post_tweet(dm)
+                # Storing the sender id
+                try:
+                    cur.execute(''' INSERT INTO Message VALUES (?, ?)''', (sender_id, dm))
+                    con.commit()
+                except:
+                    pass
                 tw.delete_dm(dm_id)
             # Delete the DM because it has invalid attachment (gif or video)
             elif media_id is None and media_type != 'photo':
@@ -36,7 +60,7 @@ def start():
                 print("Wrong attachment type. Will delete DM")
                 tw.delete_dm(dm_id)
             else:
-                print("DM has a media attached...")
+                print("There's a DM! The DM has a media attached...")
                 # Uploading media
                 media_ids = list()
                 media_ids.append(tw.upload_image(media_url))
@@ -44,6 +68,12 @@ def start():
                 # Tweets
                 dm = dm.replace(media_short_url, '')
                 tw.post_tweet_with_media(dm, media_ids[:], media_short_url)
+                # Storing the sender id
+                try:
+                    cur.execute(''' INSERT INTO Message VALUES (?, ?)''', (sender_id, dm))
+                    con.commit()
+                except:
+                    pass
                 tw.delete_dm(dm_id)
         else:
             if len(dm) > 280:

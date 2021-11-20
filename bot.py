@@ -22,7 +22,7 @@ class Twbot:
 
     # Reading through DM
     def read_dm(self):
-        """ Returns https://ton.twitter.com/1.1/ton/data/dm/1461612025017110532/1461611503707045889/Hg6Ziu5X.jpg
+        """ Returns
         -----------
         `[{sender, message, message_id, media_id, media_url, short_url, media_type}]`
         """
@@ -99,6 +99,7 @@ class Twbot:
         try:
             if re.search(r'https://twitter.com/.+/\d+', tweet).group() in tweet:
                 url = re.search(r'https://twitter.com/.+/\d+', tweet).group()
+            tweet = tweet.replace(url, '')
             self.api.update_status(tweet, media_ids=media_id, attachment_url=url)
         except:
             self.api.update_status(tweet, media_ids=media_id)
