@@ -46,12 +46,13 @@ def start():
             # Tweets if there's no media id and media type
             if media_id is None and media_type is None:
                 print("There's a DM! The DM doesn't have any media. Will be tweeted soon~")
-                tw.post_tweet(dm)
-                # Storing the sender id
                 try:
+                    tw.post_tweet(dm)
+                    # Storing the sender id
                     cur.execute(''' INSERT INTO Message VALUES (?, ?)''', (sender_id, dm))
                     con.commit()
                 except:
+                    print("This a duplicate of the same dm that just got tweeted. This dm will be deleted")
                     pass
                 tw.delete_dm(dm_id)
             # Delete the DM because it has invalid attachment (gif or video)
@@ -67,12 +68,13 @@ def start():
 
                 # Tweets
                 dm = dm.replace(media_short_url, '')
-                tw.post_tweet_with_media(dm, media_ids[:], media_short_url)
-                # Storing the sender id
                 try:
+                    tw.post_tweet_with_media(dm, media_ids[:], media_short_url)
+                    # Storing the sender id
                     cur.execute(''' INSERT INTO Message VALUES (?, ?)''', (sender_id, dm))
                     con.commit()
                 except:
+                    print("This a duplicate of the same dm that just got tweeted. This dm will be deleted")
                     pass
                 tw.delete_dm(dm_id)
         else:
